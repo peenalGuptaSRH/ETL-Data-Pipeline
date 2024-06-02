@@ -2,6 +2,7 @@ from faker import Faker
 import random
 import csv
 from google.cloud import storage
+from google.cloud import bigquery
 
 # Initialize Faker
 fake = Faker()
@@ -45,6 +46,13 @@ with open(csv_file_name, mode='w', newline='') as file:
 
 print(f"Data written to {csv_file_name}")
 
+# Function to create a GCS bucket
+def create_bucket(bucket_name, project_id, location='US'):
+    storage_client = storage.Client(project=project_id)
+    bucket = storage_client.bucket(bucket_name)
+    new_bucket = storage_client.create_bucket(bucket, location=location)
+    print(f'Bucket {new_bucket.name} created in {new_bucket.location} with storage class {new_bucket.storage_class}')
+
 # Function to upload the CSV file to a GCS bucket
 def upload_to_gcs(bucket_name, source_file_name, destination_blob_name, project_id):
     storage_client = storage.Client(project=project_id)
@@ -55,10 +63,33 @@ def upload_to_gcs(bucket_name, source_file_name, destination_blob_name, project_
 
     print(f'File {source_file_name} uploaded to {destination_blob_name} in {bucket_name}.')
 
+# Function to create a BigQuery dataset
+def create_bigquery_dataset(dataset_name, project_id, location='US'):
+    bigquery_client = bigquery.Client(project=project_id)
+    dataset_id = f"{project_id}.{dataset_name}"
+    dataset = bigquery.Dataset(dataset_id)
+    dataset.location = location
+    new_dataset = bigquery_client.create_dataset(dataset, exists_ok=True)
+    print(f"Dataset {new_dataset.dataset_id} created in location {new_dataset.location}.")
+
 # Set your GCS bucket name, source file name, destination file name, and project ID
-bucket_name = 'bkt-ranking-data_new'
-destination_blob_name = 'stock_data.csv'
-project_id = 'data-engineering-2-pipline'
+bucket_name = 'bucket-datapipeline'
+destination_blob_name = 'stock_data_del.csv'
+project_id = 'testdatapipeline-425000'
+dataset_name = 'stock_data_dataset'
+
+# 1 check if the bucket exist in GCP
+#if not exits -> create bucket
+# Create the bucket (uncomment if the bucket does not exist)
+create_bucket(bucket_name, project_id)
+
+#else - bucket exist
+# IF csv file exist or not -> 'stock_data_del.csv'
+# if not exist -> upload csv file to GCS bucket
+#if file exist in bucket -> append the data in the csv file
 
 # Upload the CSV file to GCS
 upload_to_gcs(bucket_name, csv_file_name, destination_blob_name, project_id)
+
+# Create the BigQuery dataset
+create_bigquery_dataset(dataset_name, project_id)
