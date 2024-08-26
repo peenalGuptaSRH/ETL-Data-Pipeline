@@ -51,32 +51,31 @@ with dag:
     )
 
     # Task to monitor the state of the Data Fusion pipeline
-    # start_pipeline_sensor = CloudDataFusionPipelineStateSensor(
-    #     task_id='pipeline_state_sensor',
-    #     project_id='datapipeline-etl',
-    #     location='europe-west1',
-    #     instance_name='data-fusion-instance',
-    #     pipeline_name='etl-pipeline',
-    #     pipeline_id='etl-pipeline',
-    #     expected_statuses=['STARTING'],
-    #     failure_statuses=['FAILED', 'KILLED', 'STOPPED'],
-    #     timeout=timedelta(minutes=30),
-    #     poke_interval=60,  # Check every 60 seconds
-    #     mode='poke'
-    # )
+    start_pipeline_sensor = CloudDataFusionPipelineStateSensor(
+        task_id='pipeline_state_sensor',
+        project_id='datapipeline-etl',
+        location='europe-west1',
+        instance_name='data-fusion-instance',
+        pipeline_name='etl-pipeline',
+        pipeline_id='etl-pipeline',
+        expected_statuses=['STARTING'],
+        failure_statuses=['FAILED', 'KILLED', 'STOPPED'],
+        timeout=timedelta(minutes=30),
+        poke_interval=60,  # Check every 60 seconds
+        mode='poke'
+    )
     
     
     # Task to send an email notification
-    # send_email = EmailOperator(
-    #     task_id='send_email',
-    #     to='peenal.gupta@srh-heidelberg.org',
-    #     subject='Airflow Alert: Data Fusion Pipeline Status',
-    #     html_content='The Data Fusion pipeline has completed successfully.',
-    # )
-     # Task to mark the sensor task as success after 8 minutes
+     send_email = EmailOperator(
+         task_id='send_email',
+         to='peenal.gupta@srh-heidelberg.org',
+         subject='Airflow Alert: Data Fusion Pipeline Status',
+         html_content='The Data Fusion pipeline has completed successfully.',
+     )
+     
+	 # Task to mark the sensor task as success after 8 minutes
 
     # Define task dependencies
     # Define task dependencies
-    run_script_task >> start_pipeline
-    # start_pipeline_sensor  
-    #>> send_email
+    run_script_task >> start_pipeline >> start_pipeline_sensor >>send_email
